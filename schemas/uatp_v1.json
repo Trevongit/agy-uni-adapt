@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UniversalAgentTranslatorProtocolEnvelope",
+  "type": "object",
+  "required": ["uatp_version", "id", "timestamp_ns", "type", "source", "payload"],
+  "properties": {
+    "uatp_version": {
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^evt_[a-zA-Z0-9_-]+$"
+    },
+    "trace_id": {
+      "type": "string"
+    },
+    "timestamp_ns": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "type": {
+      "type": "string",
+      "enum": ["handshake", "capabilities", "message", "tool_call", "tool_return", "state_patch", "error"]
+    },
+    "source": {
+      "type": "object",
+      "required": ["agent_id", "runtime"],
+      "properties": {
+        "agent_id": { "type": "string" },
+        "runtime": { "type": "string" },
+        "pubkey": { "type": "string" }
+      }
+    },
+    "destination": {
+      "type": "object",
+      "properties": {
+        "agent_id": { "type": "string" },
+        "runtime": { "type": "string" },
+        "channel_or_room": { "type": "string" }
+      }
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}
