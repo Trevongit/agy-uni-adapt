@@ -48,3 +48,5 @@ htmlcov/
 /tmp/
 .scratch/
 *.sock
+HANDOFF.md
+*handoff*

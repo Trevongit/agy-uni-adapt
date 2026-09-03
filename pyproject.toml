@@ -9,7 +9,7 @@ description = "Universal Agent Translator Protocol (UATP) - Ultra-low-overhead t
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
-    { name = "Trevor P", email = "trev2005@gmail.com" }
+    { name = "UATP Contributors" }
 ]
 requires-python = ">=3.10"
 dependencies = [

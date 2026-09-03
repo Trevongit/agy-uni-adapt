@@ -48,4 +48,4 @@ python3 -m unittest discover tests
 ---
 
 ## License
-MIT License. Created by Trevor P ([@Trevongit](https://github.com/Trevongit)).
+MIT License.
