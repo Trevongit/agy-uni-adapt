@@ -45,7 +45,10 @@ class UDSStreamServer:
                 envelope = UATPEnvelope.from_json(json_str)
 
                 if self.on_envelope:
-                    response_envelope = self.on_envelope(envelope)
+                    if asyncio.iscoroutinefunction(self.on_envelope):
+                        response_envelope = await self.on_envelope(envelope)
+                    else:
+                        response_envelope = self.on_envelope(envelope)
                     if response_envelope:
                         resp_json = response_envelope.to_json().encode("utf-8")
                         writer.write(struct.pack("!I", len(resp_json)) + resp_json)

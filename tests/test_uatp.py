@@ -143,5 +143,68 @@ class TestBuzzConnector(unittest.TestCase):
         self.assertTrue(connector.is_available())
 
 
+class TestSoftWakePolling(unittest.IsolatedAsyncioTestCase):
+    async def test_poll_messages_debounced_stop(self):
+        connector = BuzzLocalConnector()
+        stop_event = asyncio.Event()
+
+        # Mock get_messages to return sample messages
+        async def mock_get_messages(channel: str, limit: int = 20, since=None, before=None):
+            if since and since >= 100:
+                return []
+            return [{"id": "m1", "created_at": 100, "content": "hi"}]
+
+        connector.get_messages = mock_get_messages  # type: ignore
+
+        collected = []
+        async def run_poll():
+            async for msg in connector.poll_messages(
+                channel="mock-channel",
+                since_timestamp=0,
+                poll_interval_seconds=0.01,
+                max_interval_seconds=0.05,
+                stop_event=stop_event
+            ):
+                collected.append(msg)
+                if len(collected) >= 1:
+                    stop_event.set()
+
+        await asyncio.wait_for(run_poll(), timeout=2.0)
+        self.assertEqual(len(collected), 1)
+        self.assertEqual(collected[0]["id"], "m1")
+
+    async def test_async_uds_handler(self):
+        sock_path = "/tmp/uatp-async-test.sock"
+
+        async def async_handler(env: UATPEnvelope):
+            await asyncio.sleep(0.01)
+            return UATPEnvelope(
+                type=UATPMessageType.HANDSHAKE,
+                source=EndpointIdentity(agent_id="bridge", runtime="uds"),
+                destination=env.source,
+                payload={"status": "ready"}
+            )
+
+        server = UDSStreamServer(socket_path=sock_path, on_envelope=async_handler)
+        await server.start()
+
+        try:
+            client = UDSStreamClient(socket_path=sock_path)
+            await client.connect()
+
+            req = UATPEnvelope(
+                type=UATPMessageType.HANDSHAKE,
+                source=EndpointIdentity(agent_id="client", runtime="test"),
+                payload={"protocol_version": "1.0"}
+            )
+            await client.send(req)
+            resp = await client.receive()
+            self.assertEqual(resp.type, UATPMessageType.HANDSHAKE)
+            self.assertEqual(resp.payload["status"], "ready")
+            await client.close()
+        finally:
+            await server.stop()
+
+
 if __name__ == "__main__":
     unittest.main()
