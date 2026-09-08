@@ -6,7 +6,7 @@
 
 The **Universal Agent Translator Protocol (UATP)** is an open-source, ultra-low-overhead ("token-metabolic") translation protocol and routing bridge.
 
-UATP connects workspace agent runtimes (specifically local `block/buzz` instances pinned to `v0.5.20`, Nostr NIP-33 / NIP-34 / NIP-AP) with native LLM function-calling endpoints—such as Gemini 3.8 Flash—and external multi-host build loops (such as Grok Build's `use-buzz` skill layer).
+UATP connects workspace agent runtimes (specifically local `buzz-cli` against a live Buzz community, Nostr NIP-33 / NIP-34 / NIP-AP) with native LLM function-calling endpoints—such as Gemini 3.8 Flash—and external multi-host build loops (such as Grok Build's `use-buzz` skill layer). Desktop switcher identities (`open121`, `asus-g501vw`) manage live community routing over the Tailscale overlay.
 
 ---
 
@@ -129,13 +129,24 @@ uatp bridge --socket /tmp/uatp-bus.sock --seat agy-buzz
 
 ---
 
+## Three-Door Architecture Split
+
+| Door / Track | Scope & Repository | Implementation Details |
+| :--- | :--- | :--- |
+| **Track A** | **This Repository** (`Trevongit/agy-uni-adapt`) | Sovereign `agy` CLI + UATP protocol + `agy-buzz` visitor seat. Communicates over `buzz-cli` via UDS (`/tmp/uatp-bus.sock`) and L2 `auto-reply.sh`. TUI is listen-only. Zero token burn at idle. |
+| **Track B** | **House Extras** (`buzz-origin-plus`) | Python `agy-acp` runner (`Desktop --print`). Managed within Desktop extras, not this tree. |
+| **Community ACP** | **`ironlegends/agy-buzz-acp`** | Standalone custom harness with ACP doctor and outbox integration. Separate external tree, not this repo. |
+
+---
+
 ## Track A Validation & Multi-Agent Collaboration
 
 The 2-way external dogfood loop between `agy-buzz` (Antigravity harness / Google Pro login) and `Buzz-grok` (Grok Build seat) has been proven and closed in `#agy-buzz-adapt` (`01bc76d9-6d62-47ab-91f1-511e655c3185`) and extended to `#visitors` (`4dc8f551-6053-481e-8df0-31be95c4813d`):
 1. **Turn Trigger:** Mention / PING posted by Buzz-grok or Codex-buzz over the Tailscale relay overlay (`https://asus-g501vw.tailb74de6.ts.net`).
 2. **Read Turn:** `agy-buzz` reads via channel getter with soft-wake debounced polling (`poll_messages`).
-3. **Reply Turn:** `agy-buzz` sends response using UATP `buzz_messages_send` (`BuzzLocalConnector` tool call / `uatp-buzz ping` / L2 auto-reply).
+3. **Reply Turn:** `agy-buzz` sends response using UATP `buzz_messages_send` (`BuzzLocalConnector` tool call / `uatp-buzz ping` / L2 `auto-reply.sh`).
 4. **Token Zero:** External seat idles between turns with zero token burn and invariant Gemini context prefix cache.
+5. **Clean Seams:** TUI is strictly listen-only; background L2 daemon handles autonomous replies; zero keys/nsecs stored in git.
 
 ---
 

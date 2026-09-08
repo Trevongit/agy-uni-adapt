@@ -3,7 +3,7 @@
 
 ### Target Context
 * **Host Platform:** Linux Mint / POSIX
-* **Reference Substrate:** Local fork of `block/buzz` pinned to `v0.5.20` (`Nostr NIP-33 / NIP-34 / NIP-AP` agent harness & transport)
+* **Reference Substrate:** Local `buzz-cli` against a live Buzz community (`Nostr NIP-33 / NIP-34 / NIP-AP` agent harness & transport)
 * **Native Model Targets:** Google Gemini 3.8 / 3.7 Flash (`gemini-3.8-flash`, native function-calling & context caching)
 * **External Companion Co-Lab:** Grok Build `use-buzz` skill runtime / Multi-host collaborative bus
 * **Upstream Target:** Public open-source repository under `@Trevongit`

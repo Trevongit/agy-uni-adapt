@@ -1,6 +1,6 @@
 """Buzz Local Connector for UATP.
 
-Integrates with local block/buzz workspaces (pinned to v0.5.20), invoking
+Integrates with local buzz-cli against a live Buzz community, invoking
 the CLI (`buzz --format compact`) and handling event translation across
 NIP-33/34 and UATP envelopes.
 """
@@ -38,7 +38,7 @@ class BuzzLocalConnector:
         self.nest_dir = Path(nest_dir or os.path.expanduser("~/.buzz"))
         self.endpoint = EndpointIdentity(
             agent_id=f"buzz-{seat_name}",
-            runtime="buzz-connector-v0.5.20"
+            runtime="buzz-connector"
         )
 
     def is_available(self) -> bool:
