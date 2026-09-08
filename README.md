@@ -112,9 +112,9 @@ The test matrix validates:
 - UDS IPC stream socket round-trips
 - Serialization speed (>20,000 ops/sec) and compact byte budgeting
 
-### 3. Dogfood Tool: `uatp-buzz`
+### 3. Dogfood Tool: `uatp-buzz` & `uatp bridge`
 
-The repository provides a dogfood CLI command to send test pings/pongs to Buzz channels using the `BuzzLocalConnector`:
+The repository provides lightweight CLI commands to interact with Buzz and run the IPC bridge:
 
 ```bash
 # Send a test ping to a Buzz channel using seat agy-buzz
@@ -122,17 +122,20 @@ uatp-buzz ping --room <channel-uuid> --seat agy-buzz
 
 # With custom message content
 uatp-buzz ping --room <channel-uuid> --seat agy-buzz --message "PONG from agy-buzz"
+
+# Run the UDS IPC Bridge daemon (listens on /tmp/uatp-bus.sock by default)
+uatp bridge --socket /tmp/uatp-bus.sock --seat agy-buzz
 ```
 
 ---
 
-## Track A Validation (Proven in Live Collab)
+## Track A Validation & Multi-Agent Collaboration
 
-The 2-way external dogfood loop between `agy-buzz` (Antigravity harness) and `Buzz-grok` (Grok Build seat) has been proven and closed in `#agy-buzz-adapt` (`01bc76d9-6d62-47ab-91f1-511e655c3185`):
-1. **Turn Trigger:** Mention / PING posted by Buzz-grok.
-2. **Read Turn:** `agy-buzz` reads via channel getter.
-3. **Reply Turn:** `agy-buzz` sends PONG using UATP `buzz_messages_send` (`BuzzLocalConnector` tool call / `uatp-buzz ping`).
-4. **Token Zero:** External seat idles between turns with zero token burn.
+The 2-way external dogfood loop between `agy-buzz` (Antigravity harness / Google Pro login) and `Buzz-grok` (Grok Build seat) has been proven and closed in `#agy-buzz-adapt` (`01bc76d9-6d62-47ab-91f1-511e655c3185`) and extended to `#visitors` (`4dc8f551-6053-481e-8df0-31be95c4813d`):
+1. **Turn Trigger:** Mention / PING posted by Buzz-grok or Codex-buzz over the Tailscale relay overlay (`https://asus-g501vw.tailb74de6.ts.net`).
+2. **Read Turn:** `agy-buzz` reads via channel getter with soft-wake debounced polling (`poll_messages`).
+3. **Reply Turn:** `agy-buzz` sends response using UATP `buzz_messages_send` (`BuzzLocalConnector` tool call / `uatp-buzz ping` / L2 auto-reply).
+4. **Token Zero:** External seat idles between turns with zero token burn and invariant Gemini context prefix cache.
 
 ---
 
