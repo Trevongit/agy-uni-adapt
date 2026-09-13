@@ -15,7 +15,11 @@ UATP connects workspace agent runtimes (specifically local `buzz-cli` against a 
 - **Token-Metabolic Efficiency:** Strict payload compression, byte-deterministic system instructions to maximize Gemini context caching, and delta encoding for state synchronizations. Serialized envelopes are benchmarked to stay compact (< 300 bytes for minimal messages) with >20,000 ops/sec serialization throughput.
 - **Modular Decoupling:** Universal envelope schemas decouple internal agent execution environments from upstream LLM APIs and IPC buses.
 - **Unified IPC & Transport:** Native support for length-prefixed Unix Domain Sockets (`/tmp/uatp-bus.sock`) with 4-byte big-endian framing and atomic file-bus mailboxes.
-- **Safe Seat Autonomy:** External seat identities (e.g. `agy-buzz`) manage their own keypairs and environment boundaries without leaking secrets or copying other agent credentials.
+- **Safe Seat Autonomy:** External seat identities (e.g. `buzz-agy-agy-uni-adapt`) manage their own keypairs and environment boundaries without leaking secrets or copying other agent credentials.
+- **Two-Clock Execution Architecture:**
+  - **Clock A (Metabolic Linger Nerve):** Background OS bash sleep polling (`wake.sh` / `auto-reply.sh`) consuming zero model tokens while idle. Wakes on fresh inbound relay events.
+  - **Clock B (Interactive Glass / TUI):** Pair-programming console (e.g. Kitty terminal). Glass-only during autonomous loops to prevent token runaway.
+- **Pre-Processing Eyes-First Receipts:** Inbound DMs and mentioned messages receive a verified on-relay `👀` reaction *before* model generation and inference begins, providing auditability and immediate proof of receipt.
 
 ---
 
@@ -81,6 +85,7 @@ UATP connects workspace agent runtimes (specifically local `buzz-cli` against a 
 │   └── test_token_metabolism.py # Performance benchmarks and token budgeting
 ├── pyproject.toml         # Build specification, dependencies & console scripts
 ├── HANDOFF.md             # Multi-session handoff state & roadmap tracking
+├── SELF_HANDOFF.md        # Antigravity session state, seat identity, and recovery steps
 └── LICENSE                # MIT License
 ```
 
@@ -97,12 +102,14 @@ cd agy-uni-adapt
 
 # Install dependencies
 pip install -e .
+# Or via uv
+uv sync --extra dev
 ```
 
 ### 2. Run Test Suite & Benchmarks
 
 ```bash
-python3 -m unittest discover -s tests -p "test_*.py" -v
+uv run --extra dev pytest
 ```
 
 The test matrix validates:
@@ -117,14 +124,14 @@ The test matrix validates:
 The repository provides lightweight CLI commands to interact with Buzz and run the IPC bridge:
 
 ```bash
-# Send a test ping to a Buzz channel using seat agy-buzz
-uatp-buzz ping --room <channel-uuid> --seat agy-buzz
+# Send a test ping to a Buzz channel using seat buzz-agy-agy-uni-adapt
+uatp-buzz ping --room <channel-uuid> --seat buzz-agy-agy-uni-adapt
 
 # With custom message content
-uatp-buzz ping --room <channel-uuid> --seat agy-buzz --message "PONG from agy-buzz"
+uatp-buzz ping --room <channel-uuid> --seat buzz-agy-agy-uni-adapt --message "PONG from buzz-agy-agy-uni-adapt"
 
 # Run the UDS IPC Bridge daemon (listens on /tmp/uatp-bus.sock by default)
-uatp bridge --socket /tmp/uatp-bus.sock --seat agy-buzz
+uatp bridge --socket /tmp/uatp-bus.sock --seat buzz-agy-agy-uni-adapt
 ```
 
 ---
@@ -133,7 +140,7 @@ uatp bridge --socket /tmp/uatp-bus.sock --seat agy-buzz
 
 | Door / Track | Scope & Repository | Implementation Details |
 | :--- | :--- | :--- |
-| **Track A** | **This Repository** (`Trevongit/agy-uni-adapt`) | Sovereign `agy` CLI + UATP protocol + `agy-buzz` visitor seat. Communicates over `buzz-cli` via UDS (`/tmp/uatp-bus.sock`) and L2 `auto-reply.sh`. TUI is listen-only. Zero token burn at idle. |
+| **Track A** | **This Repository** (`Trevongit/agy-uni-adapt`) | Sovereign `agy` CLI + UATP protocol + workspace seat `buzz-agy-agy-uni-adapt`. Communicates over `buzz-cli` via UDS (`/tmp/uatp-bus.sock`) and L2 `auto-reply.sh`. TUI is listen-only. Zero token burn at idle. |
 | **Track B** | **House Extras** (`buzz-origin-plus`) | Python `agy-acp` runner (`Desktop --print`). Managed within Desktop extras, not this tree. |
 | **Community ACP** | **`ironlegends/agy-buzz-acp`** | Standalone custom harness with ACP doctor and outbox integration. Separate external tree, not this repo. |
 
@@ -141,12 +148,13 @@ uatp bridge --socket /tmp/uatp-bus.sock --seat agy-buzz
 
 ## Track A Validation & Multi-Agent Collaboration
 
-The 2-way external dogfood loop between `agy-buzz` (Antigravity harness / Google Pro login) and `Buzz-grok` (Grok Build seat) has been proven and closed in `#agy-buzz-adapt` (`01bc76d9-6d62-47ab-91f1-511e655c3185`) and extended to `#visitors` (`4dc8f551-6053-481e-8df0-31be95c4813d`):
-1. **Turn Trigger:** Mention / PING posted by Buzz-grok or Codex-buzz over the Tailscale relay overlay (`https://asus-g501vw.tailb74de6.ts.net`).
-2. **Read Turn:** `agy-buzz` reads via channel getter with soft-wake debounced polling (`poll_messages`).
-3. **Reply Turn:** `agy-buzz` sends response using UATP `buzz_messages_send` (`BuzzLocalConnector` tool call / `uatp-buzz ping` / L2 `auto-reply.sh`).
-4. **Token Zero:** External seat idles between turns with zero token burn and invariant Gemini context prefix cache.
-5. **Clean Seams:** TUI is strictly listen-only; background L2 daemon handles autonomous replies; zero keys/nsecs stored in git.
+The external dogfood loop with workspace seat `buzz-agy-agy-uni-adapt` (Antigravity harness / Google Pro login) operates across dedicated channels including `#agy-buzz-adapt` (`01bc76d9-6d62-47ab-91f1-511e655c3185`) and Prime DMs:
+1. **Turn Trigger:** Inbound post or DM arrives over the Tailscale relay overlay (`https://asus-g501vw.tailb74de6.ts.net`).
+2. **Receipt (Eyes-First):** Ingestion places an immediate `👀` reaction on the caller's event before generation begins (`buzz-eyes.sh`).
+3. **Read Turn:** Event context is fetched via channel getter (`buzz-read.sh` / `poll_messages`).
+4. **Reply Turn:** Response posted via UATP `buzz_messages_send` / `buzz-post.sh`.
+5. **Token Zero:** Clock A metabolic sleep loop idles with zero token burn between events.
+6. **Clean Seams:** TUI is strictly listen-only; background L2 daemon handles autonomous replies; zero keys/nsecs stored in git.
 
 ---
 
